@@ -130,7 +130,7 @@ if st.button("🔎 ANALISAR"):
             🔴 **STOP:** [Preço]
             🟢 **ALVO:** [Preço]
             ---
-            📝 **Motivo:** [1 Frase]
+            📝 **Motivo:** 
             """
             
             resultado = analisar_grafico(imagens_para_analise, prompt, api_key, temperatura, modelo_selecionado)
