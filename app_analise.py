@@ -69,13 +69,13 @@ def analisar_grafico(lista_imagens, prompt, api_key, temp):
         
         # AQUI ESTÁ A CORREÇÃO: Forçamos o uso do modelo mais estável e com maior cota
         try:
-            model = genai.GenerativeModel('gemini-1.5-flash', generation_config=generation_config)
+            model = genai.GenerativeModel('models/gemini-pro-latest', generation_config=generation_config)
             response = model.generate_content(conteudo)
             return response.text
         except Exception as e:
              # Se der erro, tentamos a variação do nome (algumas contas pedem 'models/')
             try:
-                model = genai.GenerativeModel('models/gemini-1.5-flash', generation_config=generation_config)
+                model = genai.GenerativeModel('models/gemini-pro-latest', generation_config=generation_config)
                 response = model.generate_content(conteudo)
                 return response.text
             except Exception as e2:
