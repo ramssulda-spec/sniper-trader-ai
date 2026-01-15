@@ -4,129 +4,159 @@ from PIL import Image
 import os
 from dotenv import load_dotenv
 
-# --- CARREGAR SENHAS DO ARQUIVO .ENV ---
+# --- CARREGAR SENHAS ---
 load_dotenv()
-# Mude a linha 9 para isso:
-chave_secreta_env = "AIzaSyDWlprue_h8ebH0XqfSP_wXdyKZHG1vvDw"
+chave_secreta_env = os.getenv("API_KEY")
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Sniper Trader AI", page_icon="🎯", layout="wide")
+st.set_page_config(page_title="Sniper AI - MultiTimeframe", page_icon="🦅", layout="wide")
 
-# --- CSS (ESTILO) ---
+# --- CSS PERSONALIZADO ---
 st.markdown("""
 <style>
     .stButton>button {
         width: 100%;
-        background-color: #FF4B4B;
+        background-color: #00D100;
         color: white;
-        height: 3em;
+        height: 3.5em;
         font-weight: bold;
+        font-size: 18px;
+        border-radius: 10px;
     }
+    .uploaded-img { border: 2px solid #333; border-radius: 5px; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- BARRA LATERAL (CONFIGURAÇÕES) ---
+# --- BARRA LATERAL ---
 with st.sidebar:
-    st.header("⚙️ Centro de Comando")
+    st.header("🦅 Centro de Comando")
     
-    # LÓGICA INTELIGENTE DE LOGIN
+    # Login Automático
     if chave_secreta_env:
-        st.success("✅ Chave API Carregada!")
+        st.success("✅ Sistema Online (.env)")
         api_key = chave_secreta_env
     else:
         api_key = st.text_input("Cole sua API Key:", type="password")
-        if not api_key:
-            st.warning("⚠️ Crie um arquivo .env para não precisar digitar sempre.")
     
     st.markdown("---")
-    st.markdown("### 🎚️ Calibragem")
+    st.markdown("### 🎚️ Configuração")
+    temperatura = st.slider("Criatividade da IA", 0.0, 1.0, 0.1)
     
-    # 1. Slider de Temperatura
-    temperatura = st.slider("Agressividade da IA", 0.0, 1.0, 0.2) 
-    st.caption("0.0 = Conservador | 1.0 = Arriscado")
-
-    # 2. Seletor de Estratégia
-    st.markdown("### 🧠 Estratégia")
-    modo_operacao = st.selectbox(
-        "Selecione o Estilo:",
-        ["Day Trade (Padrão)", "Scalping (Rápido)", "Swing Trade (Longo)", "Reversão (Topo/Fundo)"]
+    estilo = st.selectbox(
+        "Estilo de Operação:",
+        ["Day Trade (Padrão)", "Scalping (Agressivo)", "Swing Trade (Longo)"]
     )
+    
+    st.info("💡 Dica: Para maior precisão, faça upload de pelo menos 2 tempos gráficos (Ex: H1 e M5).")
 
-# --- FUNÇÃO DE ANÁLISE ---
-def analisar_grafico(image, prompt, api_key, temp):
+# --- FUNÇÃO DE ANÁLISE (AGORA ACEITA LISTA DE IMAGENS) ---
+def analisar_multi_graficos(lista_imagens, prompt, api_key, temp):
     try:
         genai.configure(api_key=api_key)
         generation_config = {"temperature": temp}
         
-        # Tenta modelo PRO, se falhar vai de FLASH
+        # Monta o pacote de dados para enviar (Texto + Imagem 1 + Imagem 2...)
+        conteudo = [prompt] + lista_imagens
+        
         try:
             model = genai.GenerativeModel('models/gemini-robotics-er-1.5-preview', generation_config=generation_config)
-            response = model.generate_content([prompt, image])
+            response = model.generate_content(conteudo)
         except:
             model = genai.GenerativeModel('models/gemini-robotics-er-1.5-preview', generation_config=generation_config)
-            response = model.generate_content([prompt, image])
+            response = model.generate_content(conteudo)
             
         return response.text
     except Exception as e:
-        return f"Erro na API: {str(e)}"
+        return f"Erro Crítico: {str(e)}"
 
 # --- INTERFACE PRINCIPAL ---
-st.title("🎯 Sniper Trader AI")
-st.markdown(f"##### Modo Ativo: **{modo_operacao}**")
+st.title("🦅 Sniper AI: Multi-Timeframe")
+st.markdown("##### Análise de Confluência (Top-Down Analysis)")
 
-col1, col2 = st.columns([2, 1])
+# ÁREA DE UPLOAD (3 COLUNAS)
+col1, col2, col3 = st.columns(3)
+
+imagens_para_analise = []
+legendas_contexto = []
 
 with col1:
-    st.subheader("1. Gráfico")
-    uploaded_file = st.file_uploader("Arraste o print aqui...", type=["jpg", "jpeg", "png"])
-    
-    if uploaded_file:
-        image = Image.open(uploaded_file)
-        st.image(image, caption='Analisando...', use_container_width=True)
+    st.markdown("### 1️⃣ Macro (Tendência)")
+    st.caption("Ex: Diário ou H4")
+    img1 = st.file_uploader("Upload Macro", type=["jpg", "png"], key="img1")
+    if img1:
+        pil_img1 = Image.open(img1)
+        st.image(pil_img1, use_container_width=True)
+        imagens_para_analise.append(pil_img1)
+        legendas_contexto.append("IMAGEM 1 (VISÃO MACRO/TENDÊNCIA)")
 
 with col2:
-    st.subheader("2. Sinal")
-    
-    if uploaded_file and st.button("🚀 GERAR SINAL"):
-        if not api_key:
-            st.error("🔒 API Key ausente! Verifique o .env ou a barra lateral.")
-        else:
-            with st.spinner(f'Calculando setup para {modo_operacao}...'):
-                
-                # --- LÓGICA DE PROMPT DINÂMICO ---
-                detalhe_estrategia = ""
-                if "Scalping" in modo_operacao:
-                    detalhe_estrategia = "Foque em movimentos curtos de M1/M5. Stop Loss curto. Alvos rápidos (1:1)."
-                elif "Swing" in modo_operacao:
-                    detalhe_estrategia = "Ignore ruídos. Busque tendências de H4/D1. Alvos longos (1:3+)."
-                elif "Reversão" in modo_operacao:
-                    detalhe_estrategia = "Busque divergências (RSI), exaustão, Dojis em zonas extremas e falhas de rompimento."
-                else:
-                    detalhe_estrategia = "Setup padrão de continuidade ou correção. Melhor oportunidade visível."
+    st.markdown("### 2️⃣ Estrutura (Padrão)")
+    st.caption("Ex: H1 ou M15")
+    img2 = st.file_uploader("Upload Médio", type=["jpg", "png"], key="img2")
+    if img2:
+        pil_img2 = Image.open(img2)
+        st.image(pil_img2, use_container_width=True)
+        imagens_para_analise.append(pil_img2)
+        legendas_contexto.append("IMAGEM 2 (ESTRUTURA/CORREÇÃO)")
 
-                prompt = f"""
-                Aja como um Trader Profissional operando no estilo: {modo_operacao}.
-                Instrução Tática: {detalhe_estrategia}
-                
-                Analise a imagem. Não explique o básico. Vá direto aos dados de entrada.
-                
-                Responda ESTRITAMENTE neste formato visual:
-                
-                # ⚡ SINAL: {modo_operacao.upper()}
-                
-                **SENTIMENTO:** [ALTA 🐂 / BAIXA 🐻 / NEUTRO 💤]
-                
-                ---
-                🔵 **ENTRADA:** [Preço ou Região Exata]
-                🔴 **STOP LOSS:** [Preço que invalida a tese]
-                🟢 **TAKE PROFIT:** [Preço Alvo]
-                ---
-                
-                🎯 **Motivo Técnico:** [Resumo em 1 frase]
-                ⚖️ **Risco/Retorno:** [Ex: 1 para 3]
-                """
-                
-                resultado = analisar_grafico(image, prompt, api_key, temperatura)
-                
-                st.info("Sinal Gerado")
-                st.markdown(resultado)
+with col3:
+    st.markdown("### 3️⃣ Gatilho (Entrada)")
+    st.caption("Ex: M5 ou M1")
+    img3 = st.file_uploader("Upload Micro", type=["jpg", "png"], key="img3")
+    if img3:
+        pil_img3 = Image.open(img3)
+        st.image(pil_img3, use_container_width=True)
+        imagens_para_analise.append(pil_img3)
+        legendas_contexto.append("IMAGEM 3 (GATILHO DE ENTRADA FINA)")
+
+# --- BOTÃO E LÓGICA ---
+st.markdown("---")
+if st.button("🚀 ANALISAR CONFLUÊNCIA"):
+    if not api_key:
+        st.error("🔒 Sem API Key!")
+    elif len(imagens_para_analise) == 0:
+        st.warning("⚠️ Faça upload de pelo menos 1 gráfico.")
+    else:
+        with st.spinner(f'Cruzando dados de {len(imagens_para_analise)} tempos gráficos...'):
+            
+            # PROMPT PODEROSO DE CONFLUÊNCIA
+            prompt = f"""
+            Você é um Analista Institucional Sênior operando {estilo}.
+            Você recebeu {len(imagens_para_analise)} imagens sequenciais do MESMO ativo em tempos gráficos diferentes (Top-Down Analysis).
+            
+            CONTEXTO DAS IMAGENS:
+            {legendas_contexto}
+            
+            SUA MISSÃO:
+            1. Analise a Imagem Macro para definir se somos COMPRADORES ou VENDEDORES.
+            2. Analise a Imagem de Estrutura para ver se o preço está barato ou caro.
+            3. Analise a Imagem de Gatilho para achar o ponto exato.
+            
+            Regra de Ouro: Se a tendência Macro for Alta, ignore sinais de venda no Micro (e vice-versa), a menos que seja uma reversão clara.
+            
+            Responda neste Formato (Use Markdown):
+            
+            # 🦅 RELATÓRIO DE CONFLUÊNCIA
+            
+            ### 1. Leitura de Cenário
+            * **Macro:** [Resumo curto]
+            * **Micro:** [Resumo curto]
+            * **Conclusão:** Os tempos gráficos estão alinhados? (Sim/Não)
+            
+            ---
+            # 💣 SINAL FINAL: [{estilo.upper()}]
+            
+            **VIÉS:** [COMPRA 🐂 / VENDA 🐻 / AGUARDAR ✋]
+            **(Probabilidade Estimada: 0-100%)**
+            
+            🔵 **ENTRADA:** [Preço/Região no gráfico menor]
+            🔴 **STOP LOSS:** [Técnico]
+            🟢 **TAKE PROFIT:** [Alvo na estrutura maior]
+            
+            📉 **Racional:** [Explique porque alinhou os tempos gráficos]
+            """
+            
+            resultado = analisar_multi_graficos(imagens_para_analise, prompt, api_key, temperatura)
+            
+            st.success("Análise Finalizada!")
+            st.markdown(resultado)
