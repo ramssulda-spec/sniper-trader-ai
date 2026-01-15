@@ -41,21 +41,40 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- FUNÇÃO: GERAR GRÁFICO AUTOMÁTICO ---
+# --- SUBSTITUIR APENAS A FUNÇÃO CRIAR_GRAFICO POR ESTA ---
 def criar_grafico(ticker, periodo, intervalo, nome_arquivo):
     try:
+        # Baixa os dados
         dados = yf.download(ticker, period=periodo, interval=intervalo, progress=False)
-        if len(dados) == 0: return None
+        
+        # --- CORREÇÃO DE BUG DO YAHOO ---
+        if dados.empty:
+            return None
+            
+        # Se os dados vierem com colunas complexas (MultiIndex), simplifica:
+        if isinstance(dados.columns, pd.MultiIndex):
+            dados.columns = dados.columns.get_level_values(0)
+        
+        # Remove linhas vazias
+        dados = dados.dropna()
+
+        if len(dados) < 5: # Se tiver poucos candles, cancela
+            return None
+        # --------------------------------
         
         caminho_img = f"{nome_arquivo}.png"
+        
+        # Configuração visual do gráfico
         mc = mpf.make_marketcolors(up='#00ff00', down='#ff0000', edge='inherit', wick='inherit', volume='in')
         s  = mpf.make_mpf_style(marketcolors=mc, base_mpf_style='nightclouds')
         
         mpf.plot(dados, type='candle', style=s, mav=(9, 21), volume=False, 
                  savefig=dict(fname=caminho_img, dpi=100, bbox_inches='tight'),
                  title=f"{ticker} - {intervalo}")
+        
         return caminho_img
-    except:
+    except Exception as e:
+        print(f"Erro no gráfico {intervalo}: {e}") # Ajuda a ver o erro no log
         return None
 
 # --- FUNÇÃO: CONSULTAR A IA ---
