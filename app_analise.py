@@ -9,7 +9,7 @@ load_dotenv()
 chave_secreta_env = os.getenv("API_KEY")
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Sniper Universal", page_icon="🌐", layout="wide")
+st.set_page_config(page_title="Sniper Elite V17", page_icon="🦅", layout="wide")
 
 # --- CSS ---
 st.markdown("""
@@ -25,7 +25,7 @@ st.markdown("""
         border: none;
     }
     [data-testid='stFileUploader'] {
-        background-color: #262730;
+        background-color: #1E1E1E;
         padding: 20px;
         border-radius: 10px;
     }
@@ -34,7 +34,7 @@ st.markdown("""
 
 # --- BARRA LATERAL ---
 with st.sidebar:
-    st.header("🌐 Sniper Universal")
+    st.header("🦅 Sniper Elite")
     
     if chave_secreta_env:
         st.success("✅ Conectado")
@@ -43,48 +43,46 @@ with st.sidebar:
         api_key = st.text_input("Cole sua API Key:", type="password")
     
     st.markdown("---")
-    temperatura = st.slider("Criatividade", 0.0, 1.0, 0.4)
+    st.markdown("### 🧠 Motor de IA")
+    
+    # AQUI ESTÁ A MÁGICA: A lista exata que você forneceu!
+    # Coloquei os melhores no topo.
+    modelo_selecionado = st.selectbox(
+        "Escolha o Modelo:",
+        [
+            "models/gemini-2.0-flash",          # Recomendado (Novo e Rápido)
+            "models/gemini-2.0-flash-lite",     # Ultra Rápido (Scalping)
+            "models/gemini-flash-latest",       # Estável
+            "models/gemini-2.5-flash",          # Versão 2.5
+            "models/gemini-1.5-flash"           # Clássico
+        ]
+    )
+    
+    st.caption(f"Usando: {modelo_selecionado}")
+    
+    st.markdown("---")
+    temperatura = st.slider("Agressividade", 0.0, 1.0, 0.4)
     estilo = st.selectbox("Modo:", ["Day Trade", "Scalping", "Swing"])
-    st.info("ℹ️ Sistema de Auto-Adaptação de Modelo Ativo")
 
-# --- FUNÇÃO DE ANÁLISE (O SEGREDO ESTÁ AQUI) ---
-def analisar_grafico(lista_imagens, prompt, api_key, temp):
-    genai.configure(api_key=api_key)
-    generation_config = {"temperature": temp}
-    conteudo = [prompt] + lista_imagens
-    
-    # LISTA DE TODOS OS MODELOS POSSÍVEIS (DO NOVO AO ANTIGO)
-    # Se um falhar, ele pula para o próximo automaticamente.
-    lista_modelos = [
-        "gemini-1.5-flash",          # 1. O ideal (Rápido)
-        "models/gemini-1.5-flash",   # 2. Variação de nome
-        "gemini-1.5-flash-latest",   # 3. Variação de versão
-        "gemini-pro",                # 4. O Clássico (Funciona sempre)
-        "models/gemini-pro"          # 5. Variação do clássico
-    ]
-    
-    log_erros = []
+# --- FUNÇÃO DE ANÁLISE ---
+def analisar_grafico(lista_imagens, prompt, api_key, temp, modelo_nome):
+    try:
+        genai.configure(api_key=api_key)
+        generation_config = {"temperature": temp}
+        conteudo = [prompt] + lista_imagens
+        
+        # Usa exatamente o nome que você escolheu no menu
+        model = genai.GenerativeModel(modelo_nome, generation_config=generation_config)
+        
+        response = model.generate_content(conteudo)
+        return response.text
 
-    for modelo_atual in lista_modelos:
-        try:
-            # Tenta gerar com o modelo da vez
-            model = genai.GenerativeModel(modelo_atual, generation_config=generation_config)
-            response = model.generate_content(conteudo)
-            
-            # Se chegou aqui, funcionou! Retorna o texto e avisa qual modelo usou.
-            return f"✅ SUCESSO (Motor usado: {modelo_atual})\n\n" + response.text
-            
-        except Exception as e:
-            # Se falhar, guarda o erro e tenta o próximo
-            log_erros.append(f"❌ {modelo_atual}: Falhou ({str(e)})")
-            continue
-
-    # Se saiu do loop, é porque NENHUM funcionou
-    return f"⛔ ERRO TOTAL. Todos os modelos falharam.\nDetalhes:\n" + "\n".join(log_erros)
+    except Exception as e:
+        return f"⛔ Erro com o modelo {modelo_nome}:\n{str(e)}\n\n👉 Tente selecionar outro modelo na barra lateral!"
 
 # --- INTERFACE ---
-st.title("🌐 Sniper: Sistema Universal")
-st.markdown("##### Se um modelo falhar, o próximo assume o comando.")
+st.title(f"🦅 Sniper Elite: {modelo_selecionado.replace('models/', '')}")
+st.markdown("##### Envie os prints e escolha o motor na esquerda.")
 
 col1, col2, col3 = st.columns(3)
 imagens_para_analise = []
@@ -113,13 +111,13 @@ with col3:
         st.image(pil_img3, use_container_width=True)
         imagens_para_analise.append(pil_img3)
 
-if st.button("🔎 ANALISAR AGORA"):
+if st.button("🔎 ANALISAR"):
     if not api_key:
         st.error("🔒 Sem API Key.")
     elif len(imagens_para_analise) == 0:
         st.warning("⚠️ Suba pelo menos 1 imagem.")
     else:
-        with st.spinner('Testando conexões de IA...'):
+        with st.spinner(f'Processando com {modelo_selecionado}...'):
             prompt = f"""
             Trader: {estilo}.
             Analise as imagens.
@@ -135,9 +133,9 @@ if st.button("🔎 ANALISAR AGORA"):
             📝 **Motivo:** [1 Frase]
             """
             
-            resultado = analisar_grafico(imagens_para_analise, prompt, api_key, temperatura)
+            resultado = analisar_grafico(imagens_para_analise, prompt, api_key, temperatura, modelo_selecionado)
             
-            if "⛔ ERRO TOTAL" in resultado:
+            if "⛔" in resultado:
                 st.error(resultado)
             else:
                 st.success("Sinal Gerado!")
