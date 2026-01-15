@@ -41,30 +41,39 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- SUBSTITUIR APENAS A FUNÇÃO CRIAR_GRAFICO POR ESTA ---
+# --- SUBSTITUA APENAS A FUNÇÃO criar_grafico POR ESTA ---
 def criar_grafico(ticker, periodo, intervalo, nome_arquivo):
     try:
-        # Baixa os dados
-        dados = yf.download(ticker, period=periodo, interval=intervalo, progress=False)
+        # Tenta baixar. Se der erro, tenta de novo sem progresso
+        dados = yf.download(ticker, period=periodo, interval=intervalo, progress=False, multi_level_index=False)
         
-        # --- CORREÇÃO DE BUG DO YAHOO ---
-        if dados.empty:
+        # --- BLINDAGEM CONTRA DADOS VAZIOS ---
+        if dados is None or dados.empty:
+            print(f"Erro: Yahoo retornou vazio para {ticker} ({intervalo})")
             return None
             
-        # Se os dados vierem com colunas complexas (MultiIndex), simplifica:
+        # --- CORREÇÃO DO BUG DAS COLUNAS (MULTI-INDEX) ---
+        # Se o Yahoo mandar colunas duplas (ex: Price/Close), pegamos só o valor
         if isinstance(dados.columns, pd.MultiIndex):
             dados.columns = dados.columns.get_level_values(0)
-        
-        # Remove linhas vazias
-        dados = dados.dropna()
+            
+        # Garante que temos as colunas certas
+        colunas_necessarias = ['Open', 'High', 'Low', 'Close']
+        # Se faltar alguma, tenta renomear ou cancela
+        if not all(col in dados.columns for col in colunas_necessarias):
+            # Tenta verificar se estão em minúsculo
+            dados.columns = [c.capitalize() for c in dados.columns]
+            if not all(col in dados.columns for col in colunas_necessarias):
+                return None
 
-        if len(dados) < 5: # Se tiver poucos candles, cancela
-            return None
-        # --------------------------------
+        # Remove linhas com zero ou vazias
+        dados = dados.dropna()
+        if len(dados) < 5: return None
+        # ---------------------------------------------
         
         caminho_img = f"{nome_arquivo}.png"
         
-        # Configuração visual do gráfico
+        # Configuração visual
         mc = mpf.make_marketcolors(up='#00ff00', down='#ff0000', edge='inherit', wick='inherit', volume='in')
         s  = mpf.make_mpf_style(marketcolors=mc, base_mpf_style='nightclouds')
         
@@ -74,7 +83,7 @@ def criar_grafico(ticker, periodo, intervalo, nome_arquivo):
         
         return caminho_img
     except Exception as e:
-        print(f"Erro no gráfico {intervalo}: {e}") # Ajuda a ver o erro no log
+        print(f"Erro Crítico no gráfico {intervalo}: {e}")
         return None
 
 # --- FUNÇÃO: CONSULTAR A IA ---
