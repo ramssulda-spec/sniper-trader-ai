@@ -9,64 +9,63 @@ load_dotenv()
 chave_secreta_env = os.getenv("API_KEY")
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Sniper Pro - Institucional", page_icon="💎", layout="wide")
+st.set_page_config(page_title="Sniper AI - Hunter", page_icon="🦅", layout="wide")
 
-# --- CSS (VISUAL DE ALTA PERFORMANCE) ---
+# --- CSS (ESTILO AGRESSIVO) ---
 st.markdown("""
 <style>
     .stButton>button {
         width: 100%;
-        background-color: #000000;
-        color: #00FF00;
-        border: 2px solid #00FF00;
+        background-color: #0056b3; /* Azul Profissional */
+        color: white;
         height: 4em;
         font-weight: bold;
         font-size: 20px;
-        border-radius: 10px;
-        text-transform: uppercase;
+        border-radius: 8px;
+        border: none;
     }
     .stButton>button:hover {
-        background-color: #00FF00;
-        color: black;
+        background-color: #004494;
     }
+    .big-font { font-size:20px !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # --- BARRA LATERAL ---
 with st.sidebar:
-    st.header("💎 Sniper Institucional")
+    st.header("🦅 Modo Caçador")
     
     if chave_secreta_env:
-        st.success("✅ Conectado ao Servidor")
+        st.success("✅ Sistema Ativo")
         api_key = chave_secreta_env
     else:
         api_key = st.text_input("Sua API Key:", type="password")
     
     st.markdown("---")
-    st.markdown("### 🎚️ Critério de Entrada")
-    # Temperatura mais baixa = Menos alucinação, mais precisão
-    temperatura = st.slider("Risco Aceitável", 0.0, 0.5, 0.1)
-    st.caption("Mantenha baixo (0.1) para precisão máxima.")
+    st.markdown("### 🎯 Perfil Operacional")
+    
+    # Agora a temperatura padrão é 0.4 para permitir que ela "enxergue" oportunidades onde o conservador não veria
+    temperatura = st.slider("Criatividade / Busca", 0.0, 1.0, 0.4)
     
     estilo = st.selectbox(
-        "Setup Desejado:",
-        ["Price Action Puro (SMC)", "Reversão de Tendência", "Rompimento de Estrutura"]
+        "Estilo de Trade:",
+        ["Day Trade (Intraday)", "Scalping (Tiro Curto)", "Swing (Tendência)"]
     )
+    
+    st.info("ℹ️ O sistema sempre buscará um sinal, classificando o risco para você decidir.")
 
 # --- FUNÇÃO DE ANÁLISE ---
 def analisar_grafico(lista_imagens, prompt, api_key, temp):
     try:
         genai.configure(api_key=api_key)
-        # Temperatura baixa para ser extremamente técnico e frio
         generation_config = {"temperature": temp}
         conteudo = [prompt] + lista_imagens
         
-        # Tenta o modelo PRO (Mais inteligente para raciocínio complexo)
+        # Tenta o modelo PRO (Melhor raciocínio)
         try:
             model = genai.GenerativeModel('models/gemini-robotics-er-1.5-preview', generation_config=generation_config)
             response = model.generate_content(conteudo)
         except:
-            # Fallback
             model = genai.GenerativeModel('models/gemini-robotics-er-1.5-preview', generation_config=generation_config)
             response = model.generate_content(conteudo)
             
@@ -75,23 +74,23 @@ def analisar_grafico(lista_imagens, prompt, api_key, temp):
         return f"Erro: {str(e)}"
 
 # --- INTERFACE ---
-st.title("💎 Sniper Pro: Alta Precisão")
-st.markdown("##### Sistema de Filtragem de Entradas A+ (90% Winrate)")
+st.title("🦅 Sniper Hunter V7")
+st.markdown("##### Detector de Oportunidades com Classificação de Risco")
 
 col1, col2, col3 = st.columns(3)
 imagens_para_analise = []
 
 with col1:
-    st.caption("1. Macro (Tendência Maior)")
-    img1 = st.file_uploader("Upload Macro", type=["jpg", "png"], key="img1")
+    st.caption("1. Tendência (Macro)")
+    img1 = st.file_uploader(" ", type=["jpg", "png"], key="img1")
     if img1:
         pil_img1 = Image.open(img1)
         st.image(pil_img1, use_container_width=True)
         imagens_para_analise.append(pil_img1)
 
 with col2:
-    st.caption("2. Contexto (Estrutura)")
-    img2 = st.file_uploader("Upload Contexto", type=["jpg", "png"], key="img2")
+    st.caption("2. Padrão (Intermediário)")
+    img2 = st.file_uploader(" ", type=["jpg", "png"], key="img2")
     if img2:
         pil_img2 = Image.open(img2)
         st.image(pil_img2, use_container_width=True)
@@ -99,63 +98,54 @@ with col2:
 
 with col3:
     st.caption("3. Gatilho (Entrada)")
-    img3 = st.file_uploader("Upload Gatilho", type=["jpg", "png"], key="img3")
+    img3 = st.file_uploader(" ", type=["jpg", "png"], key="img3")
     if img3:
         pil_img3 = Image.open(img3)
         st.image(pil_img3, use_container_width=True)
         imagens_para_analise.append(pil_img3)
 
-# --- BOTÃO E LÓGICA DE ELITE ---
+# --- BOTÃO E LÓGICA DE CAÇADOR ---
 st.markdown("---")
-if st.button("CALCULAR PROBABILIDADE"):
+if st.button("🔎 LOCALIZAR MELHOR ENTRADA"):
     if not api_key:
-        st.error("🔒 Login necessário.")
+        st.error("🔒 Faça login na barra lateral.")
     elif len(imagens_para_analise) == 0:
-        st.warning("⚠️ O sistema precisa de dados visuais (Imagens).")
+        st.warning("⚠️ O gráfico é necessário para a análise.")
     else:
-        with st.spinner('Analista Sênior verificando confluências...'):
+        with st.spinner('Varrendo o gráfico em busca de oportunidades...'):
             
-            # --- O PROMPT DE ELITE (A MÁGICA ACONTECE AQUI) ---
+            # --- PROMPT V7: O CAÇADOR DE OPORTUNIDADES ---
             prompt = f"""
-            Você é um Gestor de Risco Institucional Sênior.
-            Sua taxa de acerto exigida é de 90%. Se você errar o trade, perde o emprego.
+            Você é um Trader de Elite Agressivo operando no estilo: {estilo}.
+            Sua missão: Encontrar a MELHOR oportunidade de trade presente nestas imagens AGORA.
             
-            Analise as imagens fornecidas ({estilo}).
+            Não aceito "Aguardar" como resposta principal. Você deve analisar a estrutura atual e projetar um trade, mas deve CLASSIFICAR O RISCO HONESTAMENTE.
             
-            REGRAS DE OURO (FILTRO):
-            1. Se o mercado estiver lateral, "sujo" ou sem direção clara: NÃO OPERE.
-            2. Se os tempos gráficos (Macro e Micro) estiverem discordando: NÃO OPERE.
-            3. Só autorize a entrada se for um "Setup A+" (Confluência perfeita de tendência + estrutura + gatilho).
+            Analise a confluência entre Macro e Micro.
             
-            Se não houver oportunidade CLARA agora, sua obrigação é dizer "AGUARDAR" e explicar o que esperar.
+            Gere o sinal neste formato ESTRITO:
             
-            Responda ESTRITAMENTE neste formato:
+            # ⚡ OPORTUNIDADE DETECTADA
             
-            # 💎 VEREDITO DO GESTOR
+            **SINAL:** [COMPRA 🐂 / VENDA 🐻]
             
-            **STATUS:** [✅ COMPRA / 🔻 VENDA / ✋ AGUARDAR - NÃO ENTRAR]
-            **CONFIANÇA:** [0% a 100%] (Só opere acima de 85%)
-            
-            ---
-            Se STATUS for COMPRA ou VENDA:
-            💰 **ENTRADA:** [Preço Exato]
-            🛑 **STOP TÉCNICO:** [Preço Exato - Protegido atrás da estrutura]
-            🏁 **ALVO (TP):** [Preço Exato - Risco/Retorno mínimo de 1:2]
+            **NÍVEL DE RISCO:** [ESCOLHA UM:]
+            - 🟢 **BAIXO RISCO:** (Confluência total, a favor da tendência)
+            - 🟡 **MÉDIO RISCO:** (Trade válido, mas contra tendência macro ou sem pullback)
+            - 🔴 **ALTO RISCO:** (Tentativa de adivinhar topo/fundo ou mercado lateral)
             
             ---
-            Se STATUS for AGUARDAR:
-            👀 **GATILHO FUTURO:** [Ex: "Espere o preço romper X e voltar fazer pullback"]
-            ⏳ **QUANDO VOLTAR:** [Ex: "Aguarde nova vela de H1"]
-            
+            🔵 **ENTRADA:** [Preço Exato]
+            🛑 **STOP LOSS:** [Preço Exato]
+            🟢 **TAKE PROFIT:** [Preço Exato]
             ---
-            ⚖️ **Justificativa Rápida:** [Por que sim ou por que não?]
+            
+            📝 **Análise Técnica:**
+            1. **Por que entrar?** [Motivo técnico direto]
+            2. **Onde mora o perigo?** [Explique o fator de risco deste trade específico]
             """
             
             resultado = analisar_grafico(imagens_para_analise, prompt, api_key, temperatura)
             
-            if "AGUARDAR" in resultado:
-                st.warning("Mercado Perigoso detectado.")
-            else:
-                st.balloons()
-            
+            st.success("Sinal Gerado!")
             st.markdown(resultado)
