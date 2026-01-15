@@ -9,14 +9,14 @@ load_dotenv()
 chave_secreta_env = os.getenv("API_KEY")
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Sniper Flash V14", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="Sniper Universal", page_icon="🌐", layout="wide")
 
 # --- CSS ---
 st.markdown("""
 <style>
     .stButton>button {
         width: 100%;
-        background-color: #FF4B4B;
+        background-color: #00D100;
         color: white;
         height: 4em;
         font-weight: bold;
@@ -34,7 +34,7 @@ st.markdown("""
 
 # --- BARRA LATERAL ---
 with st.sidebar:
-    st.header("⚡ Sniper Rápido")
+    st.header("🌐 Sniper Universal")
     
     if chave_secreta_env:
         st.success("✅ Conectado")
@@ -45,33 +45,46 @@ with st.sidebar:
     st.markdown("---")
     temperatura = st.slider("Criatividade", 0.0, 1.0, 0.4)
     estilo = st.selectbox("Modo:", ["Day Trade", "Scalping", "Swing"])
-    st.caption("Rodando exclusivamente em Gemini 1.5 Flash")
+    st.info("ℹ️ Sistema de Auto-Adaptação de Modelo Ativo")
 
-# --- FUNÇÃO DE ANÁLISE ---
+# --- FUNÇÃO DE ANÁLISE (O SEGREDO ESTÁ AQUI) ---
 def analisar_grafico(lista_imagens, prompt, api_key, temp):
-    try:
-        genai.configure(api_key=api_key)
-        generation_config = {"temperature": temp}
-        conteudo = [prompt] + lista_imagens
-        
-        # AQUI ESTÁ A CORREÇÃO: Usamos o nome exato e oficial
-        model = genai.GenerativeModel('gemini-1.5-flash', generation_config=generation_config)
-        
-        response = model.generate_content(conteudo)
-        return response.text
+    genai.configure(api_key=api_key)
+    generation_config = {"temperature": temp}
+    conteudo = [prompt] + lista_imagens
+    
+    # LISTA DE TODOS OS MODELOS POSSÍVEIS (DO NOVO AO ANTIGO)
+    # Se um falhar, ele pula para o próximo automaticamente.
+    lista_modelos = [
+        "gemini-1.5-flash",          # 1. O ideal (Rápido)
+        "models/gemini-1.5-flash",   # 2. Variação de nome
+        "gemini-1.5-flash-latest",   # 3. Variação de versão
+        "gemini-pro",                # 4. O Clássico (Funciona sempre)
+        "models/gemini-pro"          # 5. Variação do clássico
+    ]
+    
+    log_erros = []
 
-    except Exception as e:
-        erro = str(e)
-        if "429" in erro:
-            return "⛔ Erro de Cota: O Google limitou sua velocidade. Espere 1 minuto e tente de novo."
-        elif "404" in erro:
-            return "⚠️ Erro de Versão: O servidor não achou o modelo. Atualize o requirements.txt."
-        else:
-            return f"Erro Técnico: {erro}"
+    for modelo_atual in lista_modelos:
+        try:
+            # Tenta gerar com o modelo da vez
+            model = genai.GenerativeModel(modelo_atual, generation_config=generation_config)
+            response = model.generate_content(conteudo)
+            
+            # Se chegou aqui, funcionou! Retorna o texto e avisa qual modelo usou.
+            return f"✅ SUCESSO (Motor usado: {modelo_atual})\n\n" + response.text
+            
+        except Exception as e:
+            # Se falhar, guarda o erro e tenta o próximo
+            log_erros.append(f"❌ {modelo_atual}: Falhou ({str(e)})")
+            continue
+
+    # Se saiu do loop, é porque NENHUM funcionou
+    return f"⛔ ERRO TOTAL. Todos os modelos falharam.\nDetalhes:\n" + "\n".join(log_erros)
 
 # --- INTERFACE ---
-st.title("⚡ Sniper: Análise Ilimitada")
-st.markdown("##### Versão leve para evitar bloqueios de API")
+st.title("🌐 Sniper: Sistema Universal")
+st.markdown("##### Se um modelo falhar, o próximo assume o comando.")
 
 col1, col2, col3 = st.columns(3)
 imagens_para_analise = []
@@ -100,13 +113,13 @@ with col3:
         st.image(pil_img3, use_container_width=True)
         imagens_para_analise.append(pil_img3)
 
-if st.button("🔎 ANALISAR"):
+if st.button("🔎 ANALISAR AGORA"):
     if not api_key:
         st.error("🔒 Sem API Key.")
     elif len(imagens_para_analise) == 0:
         st.warning("⚠️ Suba pelo menos 1 imagem.")
     else:
-        with st.spinner('Analisando...'):
+        with st.spinner('Testando conexões de IA...'):
             prompt = f"""
             Trader: {estilo}.
             Analise as imagens.
@@ -124,7 +137,7 @@ if st.button("🔎 ANALISAR"):
             
             resultado = analisar_grafico(imagens_para_analise, prompt, api_key, temperatura)
             
-            if "⛔" in resultado or "⚠️" in resultado:
+            if "⛔ ERRO TOTAL" in resultado:
                 st.error(resultado)
             else:
                 st.success("Sinal Gerado!")
