@@ -2,6 +2,6 @@ streamlit
 google-generativeai
 python-dotenv
 Pillow
-yfinance>=0.2.40
 mplfinance
+yfinance>=0.2.40
 
