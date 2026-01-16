@@ -9,30 +9,30 @@ load_dotenv()
 chave_secreta_env = os.getenv("API_KEY")
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Sniper SMC - Synthetics", page_icon="🏦", layout="wide")
+st.set_page_config(page_title="Sniper SMC - Ultimate", page_icon="🧬", layout="wide")
 
-# --- CSS (PRO TRADER STYLE) ---
+# --- CSS (VISUAL INSTITUCIONAL) ---
 st.markdown("""
 <style>
     .stButton>button {
         width: 100%;
-        background-color: #1E88E5; /* Azul Institucional */
+        background-color: #2962FF; /* Azul Royal SMC */
         color: white;
         height: 4em;
         font-weight: bold;
         font-size: 20px;
-        border-radius: 4px;
+        border-radius: 6px;
         border: none;
         text-transform: uppercase;
         letter-spacing: 1px;
     }
     .stButton>button:hover {
-        background-color: #1565C0;
+        background-color: #0039CB;
     }
     [data-testid='stFileUploader'] {
-        background-color: #212121;
+        background-color: #1a1a1a;
         padding: 15px;
-        border: 1px dashed #555;
+        border: 1px solid #444;
         border-radius: 8px;
     }
 </style>
@@ -40,35 +40,48 @@ st.markdown("""
 
 # --- BARRA LATERAL ---
 with st.sidebar:
-    st.header("🏦 Sniper SMC")
+    st.header("🧬 Sniper Ultimate")
     
     if chave_secreta_env:
-        st.success("✅ Conectado ao Terminal")
+        st.success("✅ Terminal Ativo")
         api_key = chave_secreta_env
     else:
         api_key = st.text_input("API Key:", type="password")
     
     st.markdown("---")
-    st.markdown("### 🧠 Motor de Análise")
+    st.markdown("### 🧠 Seleção de Inteligência")
     
-    # Lista de Modelos Atualizada
+    # AQUI ESTÃO TODOS OS MODELOS AVANÇADOS NOVAMENTE
     modelo_selecionado = st.selectbox(
-        "IA Model:",
+        "Motor de IA:",
         [
-            "models/gemini-2.0-flash",          # Recomendado
-            "models/gemini-2.0-flash-lite",     # Rápido
-            "models/gemini-1.5-flash",          # Estável
-            "models/gemini-1.5-pro",            # Alta Precisão (Lento)
+            # GERAÇÃO 3 (Experimental / Mais Potente)
+            "models/gemini-3-pro-preview",
+            "models/gemini-3-flash-preview",
+            
+            # GERAÇÃO 2.5 (Intermediária Avançada)
+            "models/gemini-2.5-pro",
+            "models/gemini-2.5-flash",
+            
+            # GERAÇÃO 2.0 (Padrão Ouro Atual)
+            "models/gemini-2.0-flash",
+            "models/gemini-2.0-flash-lite",
+            
+            # GERAÇÃO 1.5 (Estável / Backup)
+            "models/gemini-1.5-pro",
+            "models/gemini-1.5-flash"
         ]
     )
     
+    st.caption(f"Motor: {modelo_selecionado.split('/')[-1]}")
+    
     st.markdown("---")
-    # SMC exige precisão, então travamos a temperatura baixa
-    temperatura = st.slider("Precisão Institucional (Temp)", 0.0, 1.0, 0.1)
+    # SMC precisa de precisão (temperatura baixa)
+    temperatura = st.slider("Precisão (0.0 = Máxima)", 0.0, 1.0, 0.1)
     
     ativo_tipo = st.selectbox(
-        "Tipo de Ativo:",
-        ["Synthetic Indices (Vol, Crash, Boom)", "Forex", "Crypto", "Stocks"]
+        "Mercado:",
+        ["Synthetic Indices (Crash/Boom/Vol)", "Forex (Major Pairs)", "Crypto (BTC/ETH)", "XAUUSD (Gold)"]
     )
 
 # --- FUNÇÃO DE ANÁLISE ---
@@ -83,11 +96,17 @@ def analisar_grafico(lista_imagens, prompt, api_key, temp, modelo_nome):
         return response.text
 
     except Exception as e:
-        return f"⛔ Erro Técnico ({modelo_nome}): {str(e)}"
+        erro = str(e)
+        if "429" in erro:
+            return f"⏳ Cota excedida para {modelo_nome}. Tente um modelo 'Flash' ou 'Lite' na lista."
+        elif "404" in erro:
+            return f"⚠️ Modelo não encontrado. Verifique o requirements.txt."
+        else:
+            return f"⛔ Erro Técnico: {erro}"
 
 # --- INTERFACE ---
-st.title(f"🏦 Sniper: Smart Money Concepts")
-st.markdown("##### Análise Institucional para Índices Sintéticos (Crash, Boom, Volatility)")
+st.title(f"🧬 Sniper SMC: {modelo_selecionado.split('/')[-1]}")
+st.markdown("##### Framework Smart Money Concepts com IA de Última Geração")
 
 col1, col2, col3 = st.columns(3)
 imagens_para_analise = []
@@ -116,15 +135,15 @@ with col3:
         st.image(pil_img3, use_container_width=True)
         imagens_para_analise.append(pil_img3)
 
-if st.button("🔎 EXECUTAR ANÁLISE SMC"):
+if st.button("🔎 EXECUTAR ANÁLISE SMC (GEN 3)"):
     if not api_key:
         st.error("🔒 Sem API Key.")
     elif len(imagens_para_analise) == 0:
-        st.warning("⚠️ O framework SMC exige pelo menos 1 imagem (Idealmente 3).")
+        st.warning("⚠️ O framework SMC exige pelo menos 1 imagem.")
     else:
-        with st.spinner(f'Mapeando Blocos de Ordens e Liquidez com {modelo_selecionado}...'):
+        with st.spinner(f'Mapeando Liquidez com {modelo_selecionado}...'):
             
-            # --- SEU PROMPT PROFISSIONAL SMC ---
+            # --- PROMPT SMC PROFISSIONAL (MANTIDO) ---
             prompt = f"""
             Act as a Senior Institutional Analyst specializing in {ativo_tipo}.
             Analyze the provided images (Image 1 = Macro, Image 2 = Structure, Image 3 = Entry).
@@ -138,7 +157,7 @@ if st.button("🔎 EXECUTAR ANÁLISE SMC"):
 
             Based on the visual data, generate a Precise Swing Signal in this exact format:
 
-            # 🏦 SMC INSTITUTIONAL SETUP
+            # 🧬 SMC INSTITUTIONAL SETUP
 
             **Market Bias:** [LONG / SHORT]
             
@@ -160,8 +179,8 @@ if st.button("🔎 EXECUTAR ANÁLISE SMC"):
             resultado = analisar_grafico(imagens_para_analise, prompt, api_key, temperatura, modelo_selecionado)
             
             if "NO VALID SWING SETUP" in resultado:
-                st.warning("O mercado não está claro. Preservação de capital recomendada.")
+                st.warning("Sem setup claro no momento.")
                 st.markdown(resultado)
             else:
-                st.success("Setup Institucional Detectado")
+                st.success(f"Análise SMC Concluída ({modelo_selecionado})")
                 st.markdown(resultado)
