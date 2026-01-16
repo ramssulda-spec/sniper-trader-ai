@@ -137,7 +137,7 @@ if st.button("🧬 ANALISAR COM GEMINI 3"):
             🔴 **STOP:** [Preço]
             🟢 **ALVO:** [Preço]
             ---
-            📝 **Motivo:** [1 Frase]
+            📝 **Motivo:** 
             """
             
             resultado = analisar_grafico(imagens_para_analise, prompt, api_key, temperatura, modelo_selecionado)
@@ -146,4 +146,5 @@ if st.button("🧬 ANALISAR COM GEMINI 3"):
                 st.error(resultado)
             else:
                 st.success("Sinal Gerado!")
+
                 st.markdown(resultado)
