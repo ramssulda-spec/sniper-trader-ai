@@ -9,60 +9,67 @@ load_dotenv()
 chave_secreta_env = os.getenv("API_KEY")
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Sniper G3 - Next Gen", page_icon="🧬", layout="wide")
+st.set_page_config(page_title="Sniper SMC - Synthetics", page_icon="🏦", layout="wide")
 
-# --- CSS ---
+# --- CSS (PRO TRADER STYLE) ---
 st.markdown("""
 <style>
     .stButton>button {
         width: 100%;
-        background-color: #00D100;
+        background-color: #1E88E5; /* Azul Institucional */
         color: white;
         height: 4em;
         font-weight: bold;
         font-size: 20px;
-        border-radius: 8px;
+        border-radius: 4px;
         border: none;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .stButton>button:hover {
+        background-color: #1565C0;
     }
     [data-testid='stFileUploader'] {
-        background-color: #1E1E1E;
-        padding: 20px;
-        border-radius: 10px;
+        background-color: #212121;
+        padding: 15px;
+        border: 1px dashed #555;
+        border-radius: 8px;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # --- BARRA LATERAL ---
 with st.sidebar:
-    st.header("🧬 Sniper Gemini 3")
+    st.header("🏦 Sniper SMC")
     
     if chave_secreta_env:
-        st.success("✅ Conectado")
+        st.success("✅ Conectado ao Terminal")
         api_key = chave_secreta_env
     else:
-        api_key = st.text_input("Cole sua API Key:", type="password")
+        api_key = st.text_input("API Key:", type="password")
     
     st.markdown("---")
-    st.markdown("### 🧠 Cérebro da IA")
+    st.markdown("### 🧠 Motor de Análise")
     
-    # A LISTA ATUALIZADA COM OS NOVOS MODELOS QUE VOCÊ DESCOBRIU
+    # Lista de Modelos Atualizada
     modelo_selecionado = st.selectbox(
-        "Selecione a Tecnologia:",
+        "IA Model:",
         [
-            "models/gemini-3-pro-preview",      # 🚀 O MAIS NOVO E PODEROSO
-            "models/gemini-3-flash-preview",    # ⚡ O MAIS RÁPIDO DA GERAÇÃO 3
-            "models/gemini-2.5-pro",            # Versão 2.5 Pro (Intermediário)
-            "models/gemini-2.0-flash",          # O Padrão Ouro (Estável)
-            "models/gemini-2.0-flash-lite",     # Ultra Leve
-            "models/gemini-1.5-flash"           # O Clássico (Backup)
+            "models/gemini-2.0-flash",          # Recomendado
+            "models/gemini-2.0-flash-lite",     # Rápido
+            "models/gemini-1.5-flash",          # Estável
+            "models/gemini-1.5-pro",            # Alta Precisão (Lento)
         ]
     )
     
-    st.caption(f"Motor Ativo: {modelo_selecionado.replace('models/', '')}")
-    
     st.markdown("---")
-    temperatura = st.slider("Agressividade", 0.0, 1.0, 0.4)
-    estilo = st.selectbox("Modo:", ["Day Trade", "Scalping", "Swing"])
+    # SMC exige precisão, então travamos a temperatura baixa
+    temperatura = st.slider("Precisão Institucional (Temp)", 0.0, 1.0, 0.1)
+    
+    ativo_tipo = st.selectbox(
+        "Tipo de Ativo:",
+        ["Synthetic Indices (Vol, Crash, Boom)", "Forex", "Crypto", "Stocks"]
+    )
 
 # --- FUNÇÃO DE ANÁLISE ---
 def analisar_grafico(lista_imagens, prompt, api_key, temp, modelo_nome):
@@ -71,80 +78,90 @@ def analisar_grafico(lista_imagens, prompt, api_key, temp, modelo_nome):
         generation_config = {"temperature": temp}
         conteudo = [prompt] + lista_imagens
         
-        # Chama o modelo escolhido na lista
         model = genai.GenerativeModel(modelo_nome, generation_config=generation_config)
-        
         response = model.generate_content(conteudo)
         return response.text
 
     except Exception as e:
-        erro = str(e)
-        if "404" in erro:
-            return f"⛔ O modelo {modelo_nome} não foi encontrado. Tente atualizar o requirements.txt ou escolha outro na lista."
-        elif "429" in erro:
-            return f"⏳ Cota excedida para {modelo_nome}. Escolha um modelo 'Flash' ou 'Lite' na lista!"
-        else:
-            return f"Erro Técnico: {erro}"
+        return f"⛔ Erro Técnico ({modelo_nome}): {str(e)}"
 
 # --- INTERFACE ---
-st.title(f"🧬 Sniper: {modelo_selecionado.split('/')[-1]}")
-st.markdown("##### Testando a nova geração de Inteligência Artificial no Trading.")
+st.title(f"🏦 Sniper: Smart Money Concepts")
+st.markdown("##### Análise Institucional para Índices Sintéticos (Crash, Boom, Volatility)")
 
 col1, col2, col3 = st.columns(3)
 imagens_para_analise = []
 
 with col1:
-    st.caption("1. Macro")
-    img1 = st.file_uploader("Upload Macro", type=["jpg", "png", "jpeg"], key="img1")
+    st.caption("1. HTF (Macro Structure)")
+    img1 = st.file_uploader("Ex: H4 / Daily", type=["jpg", "png", "jpeg"], key="img1")
     if img1:
         pil_img1 = Image.open(img1)
         st.image(pil_img1, use_container_width=True)
         imagens_para_analise.append(pil_img1)
 
 with col2:
-    st.caption("2. Padrão")
-    img2 = st.file_uploader("Upload Padrão", type=["jpg", "png", "jpeg"], key="img2")
+    st.caption("2. Medium TF (Liquidity/POI)")
+    img2 = st.file_uploader("Ex: H1 / M30", type=["jpg", "png", "jpeg"], key="img2")
     if img2:
         pil_img2 = Image.open(img2)
         st.image(pil_img2, use_container_width=True)
         imagens_para_analise.append(pil_img2)
 
 with col3:
-    st.caption("3. Gatilho")
-    img3 = st.file_uploader("Upload Gatilho", type=["jpg", "png", "jpeg"], key="img3")
+    st.caption("3. LTF (Entry Confirmation)")
+    img3 = st.file_uploader("Ex: M5 / M1", type=["jpg", "png", "jpeg"], key="img3")
     if img3:
         pil_img3 = Image.open(img3)
         st.image(pil_img3, use_container_width=True)
         imagens_para_analise.append(pil_img3)
 
-if st.button("🧬 ANALISAR COM GEMINI 3"):
+if st.button("🔎 EXECUTAR ANÁLISE SMC"):
     if not api_key:
         st.error("🔒 Sem API Key.")
     elif len(imagens_para_analise) == 0:
-        st.warning("⚠️ Suba pelo menos 1 imagem.")
+        st.warning("⚠️ O framework SMC exige pelo menos 1 imagem (Idealmente 3).")
     else:
-        with st.spinner(f'Consultando o oráculo ({modelo_selecionado})...'):
-            prompt = f"""
-            Trader: {estilo}.
-            Analise as imagens com profundidade máxima.
+        with st.spinner(f'Mapeando Blocos de Ordens e Liquidez com {modelo_selecionado}...'):
             
-            # 🧬 SINAL G3
-            **AÇÃO:** [COMPRA/VENDA]
-            **CONFIANÇA:** [0-100%]
-            **RISCO:** [🟢/🟡/🔴]
+            # --- SEU PROMPT PROFISSIONAL SMC ---
+            prompt = f"""
+            Act as a Senior Institutional Analyst specializing in {ativo_tipo}.
+            Analyze the provided images (Image 1 = Macro, Image 2 = Structure, Image 3 = Entry).
+            
+            Please perform the analysis using the following 'Smart Money' framework:
+
+            1. **Macro Market Structure:** Determine the dominant trend on this timeframe (Bullish, Bearish, or Ranging). Look for major Breaks of Structure (BOS) or Changes of Character (CHoCH) that indicate a long-term directional shift.
+            2. **Key Swing Levels:** Identify significant Higher Timeframe (HTF) Points of Interest (POIs), such as major Order Blocks, Breakers, or weekly/daily Support & Resistance zones.
+            3. **Liquidity Sweeps:** Highlight any obvious liquidity pools (previous swing highs/lows) that the price has recently swept or is targeting as a draw on liquidity.
+            4. **Confluence:** Confirm if the price is in a 'Premium' or 'Discount' zone relative to the swing range.
+
+            Based on the visual data, generate a Precise Swing Signal in this exact format:
+
+            # 🏦 SMC INSTITUTIONAL SETUP
+
+            **Market Bias:** [LONG / SHORT]
+            
             ---
-            🔵 **ENTRADA:** [Preço]
-            🔴 **STOP:** [Preço]
-            🟢 **ALVO:** [Preço]
+            **ENTRY ZONE:** [Specific Price Range for a limit order]
+            **STOP LOSS (SL):** [Precise Price - Must be structural, below/above the key swing low/high to survive volatility]
+            **TAKE PROFIT 1 (Conservative):** [Price - Key structural resistance/support]
+            **TAKE PROFIT 2 (Swing Target):** [Price - The ultimate target based on the macro leg extension]
             ---
-            📝 **Motivo:** 
+
+            **Risk-to-Reward Ratio:** [Must be at least 1:3 for Swing Trading]
+            
+            **Trade Rationale:** [Briefly explain the BOS, POI, and Liquidity logic]
+
+            CRITICAL: If the market is currently in 'No Man's Land' (middle of a range) or the structure is unclear for a Swing Trade, explicitly state: 
+            ### 🚫 NO VALID SWING SETUP AVAILABLE (Wait for Price Action)
             """
             
             resultado = analisar_grafico(imagens_para_analise, prompt, api_key, temperatura, modelo_selecionado)
             
-            if "⛔" in resultado or "⏳" in resultado:
-                st.error(resultado)
+            if "NO VALID SWING SETUP" in resultado:
+                st.warning("O mercado não está claro. Preservação de capital recomendada.")
+                st.markdown(resultado)
             else:
-                st.success("Sinal Gerado!")
-
+                st.success("Setup Institucional Detectado")
                 st.markdown(resultado)
