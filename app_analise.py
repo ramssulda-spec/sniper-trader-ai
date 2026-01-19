@@ -53,11 +53,13 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🧠 AI Core Selector")
     
+    # LISTA RESTAURADA COM GEMINI 3 FLASH
     modelo_selecionado = st.selectbox(
         "Decryption Engine:",
         [
-            "models/gemini-3-pro-preview",      # Recomendado para IPDA (Raciocínio Profundo)
-            "models/gemini-2.0-flash",          # Rápido e Eficiente
+            "models/gemini-3-pro-preview",      # Geração 3 Pro (O Mais Inteligente)
+            "models/gemini-3-flash-preview",    # Geração 3 Flash (O Mais Rápido) - RESTAURADO
+            "models/gemini-2.0-flash",          # Geração 2 Padrão
             "models/gemini-2.5-pro",            # Alta Precisão
             "models/gemini-1.5-pro"             # Backup
         ]
@@ -90,7 +92,7 @@ def analisar_grafico(lista_imagens, prompt, api_key, temp, modelo_nome):
         if "429" in erro:
             return f"⏳ Rate Limit Hit on {modelo_nome}. Switch to a 'Flash' model."
         elif "404" in erro:
-            return f"⚠️ Model Not Found. Update requirements.txt."
+            return f"⚠️ Model Not Found ({modelo_nome}). Update requirements.txt to >=0.8.3"
         else:
             return f"⛔ System Error: {erro}"
 
@@ -133,7 +135,7 @@ if st.button("RUN ALGORITHMIC SIMULATION"):
     else:
         with st.spinner(f'Decoding Market Maker Script with {modelo_selecionado}...'):
             
-            # --- SEU NOVO PROMPT IPDA (COMPLETO) ---
+            # --- PROMPT IPDA (MANTIDO INTACTO) ---
             prompt = f"""
             Role: You are the Interbank Price Delivery Algorithm (IPDA) Specialist & Senior Quantitative Engineer. 
             Your purpose is to deconstruct {ativo_tipo} by identifying the underlying "Market Maker Script." 
@@ -188,3 +190,4 @@ if st.button("RUN ALGORITHMIC SIMULATION"):
             
             st.success("Algorithmic Pattern Decoded")
             st.markdown(resultado)
+
